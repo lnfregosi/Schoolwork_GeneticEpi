@@ -1,0 +1,75 @@
+Genetic Epi HW
+Using the dataset Dataset Gen Epi Homework.xls (see description in Dataset description.docx), please conduct the following analysis:
+1.	Read in the dataset into SAS. PID1 is an individual ID.
+2.	Using proc allele, generate allele frequencies for each ethnic/racial group (variable race_base; Hint: use the by statement, do not forget to sort the dataset by race_base beforehand). What SNPs are out of HWE and in which ethic/racial groups?
+3.	Conduct association analysis to determine the effect of the following SNPs on BMI at baseline (variable bmi-base): rs7901695, rs5219, and rs9939609. First, perform univariate analyses and then adjust for gender (variable sex1), age (variable age_base) and race/ethnicity (variable race_base). 
+4.	Recode genotypes of significant SNPs to test an additive model. Hint: replace letter genotypes with numeric values 0, 1, and 2 based on the number of minor alleles. Do not use the class statement with the additive model.
+
+
+
+Proc import out=genhw datafile ="C:\Users\anbglib070\Downloads\genhw"
+dbms=xls replace;
+getnames=yes;
+run;
+
+proc sort; 
+by race_base;
+run;
+
+proc genmod data=genhw;
+model rs7901695 = bmi_base;
+run;
+
+
+proc allele data=genhw outstat=ld haplo=est genocol delimiter='_' corrcoeff dprime ;
+  var 
+rs7901695
+
+;
+by race_base;
+run;
+proc print data=ld; run;
+
+
+proc glm data=genhw;
+class rs7901695;
+model bmi_base = rs7901695 / solution ;
+run;
+
+proc glm data=genhw;
+class rs7901695 sex1 race_base;
+model bmi_base = rs7901695 sex1 age_base race_base / solution;
+run;
+
+proc glm data=genhw;
+class rs5219;
+model bmi_base = rs5219 / solution ;
+run;
+
+proc glm data=genhw;
+class rs5219 sex1 race_base;
+model bmi_base = rs5219 sex1 age_base race_base / solution;
+run;
+
+proc glm data=genhw;
+class rs9939609;
+model bmi_base = rs9939609 / solution ;
+run;
+
+proc glm data=genhw;
+class rs9939609 sex1 race_base;
+model bmi_base = rs9939609 sex1 age_base race_base / solution;
+run;
+
+data genhw_new;
+set genhw;
+if rs7901695="A_A" then rs7901695=0;
+if rs7901695="A_G" then rs7901695=1;
+if rs7901695="G_G" then rs7901695=2;
+run;
+
+proc glm data=genhw_new;
+class sex1 race_base;
+model bmi_base = rs7901695 sex1 race_base age_base;
+run;
+quit;
